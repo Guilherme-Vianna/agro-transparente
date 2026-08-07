@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Empresa {
+  id                Int      @id @default(autoincrement())
+  razaoSocial       String   @map("razao_social")
+  nomeFantasia      String?  @map("nome_fantasia")
+  cnpj              String?  @unique
+  cpf               String?  @unique
+  inscricaoEstadual String?  @map("inscricao_estadual")
+  email             String?
+  telefone          String?
+  cep               String?
+  logradouro        String?
+  numero            String?
+  bairro            String?
+  municipio         String
+  estado            String   @db.VarChar(2)
+  ativo             Boolean  @default(true)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  produtos        Produto[]
+  usuarioEmpresas UsuarioEmpresa[]
+
+  @@map("empresa")
+}
+
+model Produto {
+  id         Int       @id @default(autoincrement())
+  empresaId  Int       @map("empresa_id")
+  nome       String
+  categoria  String?
+  descricao  String?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime? @updatedAt @map("updated_at")
+
+  empresa    Empresa    @relation(fields: [empresaId], references: [id], onDelete: Restrict)
+  producoes  Producao[]
+
+  @@map("produto")
+}
+
+model Producao {
+  id           Int       @id @default(autoincrement())
+  produtoId    Int       @map("produto_id")
+  numeroLote   String    @unique @map("numero_lote")
+  dataPlantio  DateTime? @map("data_plantio") @db.Date
+  dataColheita DateTime? @map("data_colheita") @db.Date
+  qrCodeToken  String?   @unique @map("qr_code_token")
+  qrCodeLink   String?   @map("qr_code_link")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
+
+  produto      Produto              @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+  aplicacoes   ProducaoAplicacao[]
+
+  @@map("producao")
+}
+
+model ProducaoAplicacao {
+  id                  Int       @id @default(autoincrement())
+  producaoId          Int       @map("producao_id")
+  tipo                String
+  produtoUtilizado    String?   @map("produto_utilizado")
+  dose                String?
+  dataAplicacao       DateTime? @map("data_aplicacao") @db.Date
+  periodoCarenciaDias Int?      @map("periodo_carencia_dias")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  producao            Producao  @relation(fields: [producaoId], references: [id], onDelete: Cascade)
+
+  @@map("producao_aplicacao")
+}
+
+model Usuario {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  senha     String
+  isAdmin   Boolean   @default(false) @map("is_admin")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  usuarioEmpresas UsuarioEmpresa[]
+
+  @@map("usuario")
+}
+
+model UsuarioEmpresa {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int      @map("usuario_id")
+  empresaId Int      @map("empresa_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, empresaId])
+  @@map("usuario_empresa")
+}
