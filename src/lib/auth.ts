@@ -21,10 +21,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const usuario = await prisma.usuario.findUnique({
           where: { email: parsed.data.email },
         })
-        if (!usuario) return null
+        if (!usuario) {
+          await prisma.auditLog.create({
+            data: { acao: "login_falhou", entidade: "auth", detalhes: { email: parsed.data.email } },
+          })
+          return null
+        }
 
         const senhaValida = await bcrypt.compare(parsed.data.senha, usuario.senha)
-        if (!senhaValida) return null
+        if (!senhaValida) {
+          await prisma.auditLog.create({
+            data: {
+              acao: "login_falhou",
+              entidade: "auth",
+              usuarioId: usuario.id,
+              usuarioEmail: usuario.email,
+              detalhes: { email: parsed.data.email },
+            },
+          })
+          return null
+        }
 
         return {
           id: String(usuario.id),
@@ -48,6 +64,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.isAdmin = token.isAdmin as boolean
       }
       return session
+    },
+  },
+  events: {
+    async signIn({ user }) {
+      await prisma.auditLog.create({
+        data: {
+          acao: "login",
+          entidade: "auth",
+          usuarioId: user.id ? Number(user.id) : null,
+          usuarioEmail: user.email,
+        },
+      })
     },
   },
 })

@@ -9,6 +9,7 @@ import {
   Package,
   Users,
   LogOut,
+  ScrollText,
 } from "lucide-react"
 import {
   Sidebar,
@@ -40,6 +41,7 @@ const navPrincipal = [
 const navAdmin = [
   { href: "/empresas", label: "Empresas", icon: Building2 },
   { href: "/usuarios", label: "Usuários", icon: Users },
+  { href: "/logs", label: "Logs", icon: ScrollText },
 ]
 
 export function AppSidebar({

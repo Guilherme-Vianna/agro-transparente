@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table"
 import { AplicacaoDialog } from "@/components/aplicacao-dialog"
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button"
+import { QrCodeLinkActions } from "@/components/qrcode-link-actions"
 import { deleteAplicacao } from "@/actions/aplicacao.actions"
 import { formatDate, addDaysUTC } from "@/lib/date"
 
@@ -109,6 +110,7 @@ export default async function DetalheProducaoPage({
                 </a>
               </Button>
             )}
+            {producao.qrCodeLink && <QrCodeLinkActions link={producao.qrCodeLink} />}
           </CardContent>
         </Card>
       </div>

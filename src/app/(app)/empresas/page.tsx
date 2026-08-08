@@ -13,6 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button"
+import { ClickableTableRow } from "@/components/clickable-table-row"
+import { StopPropagation } from "@/components/stop-propagation"
 import { deleteEmpresa } from "@/actions/empresa.actions"
 
 export default async function EmpresasPage() {
@@ -53,7 +55,7 @@ export default async function EmpresasPage() {
               </TableRow>
             )}
             {empresas.map((empresa) => (
-              <TableRow key={empresa.id}>
+              <ClickableTableRow key={empresa.id} href={`/empresas/${empresa.id}`}>
                 <TableCell className="font-medium">
                   <Link href={`/empresas/${empresa.id}`} className="hover:underline">
                     {empresa.nomeFantasia || empresa.razaoSocial}
@@ -69,13 +71,15 @@ export default async function EmpresasPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <ConfirmDeleteButton
-                    title="Excluir empresa"
-                    description={`Tem certeza que deseja excluir "${empresa.razaoSocial}"? Essa ação não pode ser desfeita.`}
-                    action={deleteEmpresa.bind(null, empresa.id)}
-                  />
+                  <StopPropagation>
+                    <ConfirmDeleteButton
+                      title="Excluir empresa"
+                      description={`Tem certeza que deseja excluir "${empresa.razaoSocial}"? Essa ação não pode ser desfeita.`}
+                      action={deleteEmpresa.bind(null, empresa.id)}
+                    />
+                  </StopPropagation>
                 </TableCell>
-              </TableRow>
+              </ClickableTableRow>
             ))}
           </TableBody>
         </Table>

@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs"
 import { revalidatePath } from "next/cache"
 import { requireAdmin } from "@/lib/authorization"
 import { prisma } from "@/lib/prisma"
+import { registrarLog } from "@/lib/audit"
 import {
   criarUsuarioSchema,
   atualizarUsuarioSchema,
@@ -26,6 +27,13 @@ export async function createUsuario(input: CriarUsuarioInput) {
         create: data.empresaIds.map((empresaId) => ({ empresaId })),
       },
     },
+  })
+
+  await registrarLog({
+    acao: "criar",
+    entidade: "usuario",
+    entidadeId: usuario.id,
+    detalhes: { email: usuario.email },
   })
 
   revalidatePath("/usuarios")
@@ -54,11 +62,25 @@ export async function updateUsuario(id: number, input: AtualizarUsuarioInput) {
     }
   })
 
+  await registrarLog({
+    acao: "atualizar",
+    entidade: "usuario",
+    entidadeId: id,
+    detalhes: { email: data.email },
+  })
+
   revalidatePath("/usuarios")
 }
 
 export async function deleteUsuario(id: number) {
   await requireAdmin()
+  const usuario = await prisma.usuario.findUniqueOrThrow({ where: { id } })
   await prisma.usuario.delete({ where: { id } })
+  await registrarLog({
+    acao: "excluir",
+    entidade: "usuario",
+    entidadeId: id,
+    detalhes: { email: usuario.email },
+  })
   revalidatePath("/usuarios")
 }

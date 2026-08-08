@@ -5,6 +5,7 @@ import { requireEmpresaAccess } from "@/lib/authorization"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { gerarTokenLote, montarLinkRastreio } from "@/lib/qrcode"
+import { registrarLog } from "@/lib/audit"
 import { producaoSchema, type ProducaoInput } from "@/schemas/producao.schema"
 
 function toDate(value?: string) {
@@ -47,6 +48,13 @@ export async function createProducao(input: ProducaoInput) {
     producao = await tentarCriar()
   }
 
+  await registrarLog({
+    acao: "criar",
+    entidade: "producao",
+    entidadeId: producao.id,
+    detalhes: { numeroLote: producao.numeroLote },
+  })
+
   revalidatePath("/producoes")
   return producao
 }
@@ -55,7 +63,7 @@ export async function updateProducao(id: number, input: ProducaoInput) {
   const data = producaoSchema.parse(input)
   await assertProdutoAcessivel(data.produtoId)
 
-  await prisma.producao.update({
+  const atualizada = await prisma.producao.update({
     where: { id },
     data: {
       produtoId: data.produtoId,
@@ -65,7 +73,80 @@ export async function updateProducao(id: number, input: ProducaoInput) {
     },
   })
 
+  await registrarLog({
+    acao: "atualizar",
+    entidade: "producao",
+    entidadeId: atualizada.id,
+    detalhes: { numeroLote: atualizada.numeroLote },
+  })
+
   revalidatePath("/producoes")
+}
+
+export type ImportProducaoRow = {
+  numeroLote?: string
+  produto?: string
+  dataPlantio?: string
+  dataColheita?: string
+}
+
+export async function importProducoesCsv(empresaId: number, rows: ImportProducaoRow[]) {
+  await requireEmpresaAccess(empresaId)
+
+  const produtos = await prisma.produto.findMany({ where: { empresaId } })
+  const produtoPorNome = new Map(produtos.map((p) => [p.nome.trim().toLowerCase(), p.id]))
+
+  let criados = 0
+  const erros: string[] = []
+
+  for (const [index, row] of rows.entries()) {
+    const produtoId = produtoPorNome.get((row.produto ?? "").trim().toLowerCase())
+    if (!produtoId) {
+      erros.push(`Linha ${index + 2}: produto "${row.produto ?? ""}" não encontrado`)
+      continue
+    }
+
+    const parsed = producaoSchema.safeParse({
+      produtoId,
+      numeroLote: row.numeroLote ?? "",
+      dataPlantio: row.dataPlantio ?? "",
+      dataColheita: row.dataColheita ?? "",
+    })
+    if (!parsed.success) {
+      erros.push(`Linha ${index + 2}: ${parsed.error.issues[0]?.message ?? "dados inválidos"}`)
+      continue
+    }
+
+    try {
+      const token = gerarTokenLote()
+      await prisma.producao.create({
+        data: {
+          produtoId: parsed.data.produtoId,
+          numeroLote: parsed.data.numeroLote,
+          dataPlantio: toDate(parsed.data.dataPlantio),
+          dataColheita: toDate(parsed.data.dataColheita),
+          qrCodeToken: token,
+          qrCodeLink: montarLinkRastreio(token),
+        },
+      })
+      criados++
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        erros.push(`Linha ${index + 2}: número de lote "${parsed.data.numeroLote}" já existe`)
+      } else {
+        throw error
+      }
+    }
+  }
+
+  await registrarLog({
+    acao: "criar",
+    entidade: "producao",
+    detalhes: { importacaoCsv: true, criados, erros: erros.length },
+  })
+
+  revalidatePath("/producoes")
+  return { criados, erros }
 }
 
 export async function deleteProducao(id: number) {
@@ -75,5 +156,11 @@ export async function deleteProducao(id: number) {
   })
   await requireEmpresaAccess(producao.produto.empresaId)
   await prisma.producao.delete({ where: { id } })
+  await registrarLog({
+    acao: "excluir",
+    entidade: "producao",
+    entidadeId: id,
+    detalhes: { numeroLote: producao.numeroLote },
+  })
   revalidatePath("/producoes")
 }

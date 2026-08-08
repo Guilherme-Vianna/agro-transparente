@@ -18,6 +18,9 @@ describe("createProducao (integração)", () => {
   })
 
   it("cria um lote com token e link de QR gerados automaticamente", async () => {
+    await prisma.usuario.create({
+      data: { id: 1, email: "admin@admin.com", senha: "hash", isAdmin: true },
+    })
     const empresa = await prisma.empresa.create({
       data: { razaoSocial: "Fazenda Teste", municipio: "Ribeirão Preto", estado: "SP" },
     })
@@ -38,6 +41,9 @@ describe("createProducao (integração)", () => {
   })
 
   it("rejeita número de lote duplicado (unique constraint)", async () => {
+    await prisma.usuario.create({
+      data: { id: 1, email: "admin@admin.com", senha: "hash", isAdmin: true },
+    })
     const empresa = await prisma.empresa.create({
       data: { razaoSocial: "Fazenda Teste", municipio: "Ribeirão Preto", estado: "SP" },
     })

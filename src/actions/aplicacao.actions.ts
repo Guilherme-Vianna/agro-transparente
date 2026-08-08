@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { requireEmpresaAccess } from "@/lib/authorization"
 import { prisma } from "@/lib/prisma"
+import { registrarLog } from "@/lib/audit"
 import { aplicacaoSchema, type AplicacaoInput } from "@/schemas/aplicacao.schema"
 
 function normalizarDados(data: AplicacaoInput) {
@@ -31,8 +32,15 @@ export async function addAplicacao(producaoId: number, input: AplicacaoInput) {
   const data = aplicacaoSchema.parse(input)
   await assertProducaoAcessivel(producaoId)
 
-  await prisma.producaoAplicacao.create({
+  const aplicacao = await prisma.producaoAplicacao.create({
     data: { ...normalizarDados(data), producaoId },
+  })
+
+  await registrarLog({
+    acao: "criar",
+    entidade: "aplicacao",
+    entidadeId: aplicacao.id,
+    detalhes: { producaoId, tipo: aplicacao.tipo },
   })
 
   revalidatePath(`/producoes/${producaoId}`)
@@ -47,11 +55,24 @@ export async function updateAplicacao(id: number, producaoId: number, input: Apl
     data: normalizarDados(data),
   })
 
+  await registrarLog({
+    acao: "atualizar",
+    entidade: "aplicacao",
+    entidadeId: id,
+    detalhes: { producaoId, tipo: data.tipo },
+  })
+
   revalidatePath(`/producoes/${producaoId}`)
 }
 
 export async function deleteAplicacao(id: number, producaoId: number) {
   await assertProducaoAcessivel(producaoId)
   await prisma.producaoAplicacao.delete({ where: { id } })
+  await registrarLog({
+    acao: "excluir",
+    entidade: "aplicacao",
+    entidadeId: id,
+    detalhes: { producaoId },
+  })
   revalidatePath(`/producoes/${producaoId}`)
 }

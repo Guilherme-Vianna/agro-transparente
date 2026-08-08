@@ -87,6 +87,7 @@ model Usuario {
   updatedAt DateTime? @updatedAt @map("updated_at")
 
   usuarioEmpresas UsuarioEmpresa[]
+  auditLogs       AuditLog[]
 
   @@map("usuario")
 }
@@ -102,4 +103,22 @@ model UsuarioEmpresa {
 
   @@unique([usuarioId, empresaId])
   @@map("usuario_empresa")
+}
+
+model AuditLog {
+  id           Int      @id @default(autoincrement())
+  usuarioId    Int?     @map("usuario_id")
+  usuarioEmail String?  @map("usuario_email")
+  acao         String
+  entidade     String
+  entidadeId   Int?     @map("entidade_id")
+  detalhes     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@index([entidade, entidadeId])
+  @@index([usuarioId])
+  @@index([createdAt])
+  @@map("audit_log")
 }

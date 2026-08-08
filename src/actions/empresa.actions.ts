@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { requireAdmin, requireEmpresaAccess } from "@/lib/authorization"
 import { setEmpresaAtivaCookie } from "@/lib/session"
 import { prisma } from "@/lib/prisma"
+import { registrarLog } from "@/lib/audit"
 import { empresaSchema, type EmpresaInput } from "@/schemas/empresa.schema"
 
 export async function setEmpresaAtiva(empresaId: number) {
@@ -36,6 +37,13 @@ export async function createEmpresa(input: EmpresaInput) {
     data: normalizarOpcionais(data),
   })
 
+  await registrarLog({
+    acao: "criar",
+    entidade: "empresa",
+    entidadeId: empresa.id,
+    detalhes: { razaoSocial: empresa.razaoSocial },
+  })
+
   revalidatePath("/empresas")
   return empresa
 }
@@ -49,12 +57,26 @@ export async function updateEmpresa(id: number, input: EmpresaInput) {
     data: normalizarOpcionais(data),
   })
 
+  await registrarLog({
+    acao: "atualizar",
+    entidade: "empresa",
+    entidadeId: empresa.id,
+    detalhes: { razaoSocial: empresa.razaoSocial },
+  })
+
   revalidatePath("/empresas")
   return empresa
 }
 
 export async function deleteEmpresa(id: number) {
   await requireAdmin()
+  const empresa = await prisma.empresa.findUniqueOrThrow({ where: { id } })
   await prisma.empresa.delete({ where: { id } })
+  await registrarLog({
+    acao: "excluir",
+    entidade: "empresa",
+    entidadeId: id,
+    detalhes: { razaoSocial: empresa.razaoSocial },
+  })
   revalidatePath("/empresas")
 }
