@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, useTransition } from "react"
+import { useRef, useState, useTransition } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -9,13 +9,16 @@ export function SearchInput({ placeholder = "Buscar..." }: { placeholder?: strin
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [value, setValue] = useState(searchParams.get("q") ?? "")
+  const q = searchParams.get("q") ?? ""
+  const [value, setValue] = useState(q)
+  const [syncedQ, setSyncedQ] = useState(q)
   const [, startTransition] = useTransition()
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    setValue(searchParams.get("q") ?? "")
-  }, [searchParams])
+  if (q !== syncedQ) {
+    setSyncedQ(q)
+    setValue(q)
+  }
 
   function handleChange(next: string) {
     setValue(next)

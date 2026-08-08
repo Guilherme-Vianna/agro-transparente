@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { requireEmpresaAccess } from "@/lib/authorization"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
-import { gerarTokenLote, montarLinkRastreio } from "@/lib/qrcode"
+import { gerarTokenLote } from "@/lib/qrcode"
 import { registrarLog } from "@/lib/audit"
 import { producaoSchema, type ProducaoInput } from "@/schemas/producao.schema"
 
@@ -31,7 +31,6 @@ export async function createProducao(input: ProducaoInput) {
         dataPlantio: toDate(data.dataPlantio),
         dataColheita: toDate(data.dataColheita),
         qrCodeToken: token,
-        qrCodeLink: montarLinkRastreio(token),
       },
     })
   }
@@ -126,7 +125,6 @@ export async function importProducoesCsv(empresaId: number, rows: ImportProducao
           dataPlantio: toDate(parsed.data.dataPlantio),
           dataColheita: toDate(parsed.data.dataColheita),
           qrCodeToken: token,
-          qrCodeLink: montarLinkRastreio(token),
         },
       })
       criados++

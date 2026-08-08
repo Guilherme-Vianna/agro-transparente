@@ -37,7 +37,6 @@ describe("createProducao (integração)", () => {
 
     expect(producao.qrCodeToken).toBeTruthy()
     expect(producao.qrCodeToken).toHaveLength(12)
-    expect(producao.qrCodeLink).toContain(`/rastreio/${producao.qrCodeToken}`)
   })
 
   it("rejeita número de lote duplicado (unique constraint)", async () => {

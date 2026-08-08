@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { gerarQrBuffer } from "@/lib/qrcode"
+import { gerarQrBuffer, montarLinkRastreio } from "@/lib/qrcode"
 
 export async function GET(
   _request: Request,
@@ -9,11 +9,11 @@ export async function GET(
   const { token } = await params
   const producao = await prisma.producao.findUnique({ where: { qrCodeToken: token } })
 
-  if (!producao || !producao.qrCodeLink) {
+  if (!producao) {
     return NextResponse.json({ error: "Lote não encontrado" }, { status: 404 })
   }
 
-  const buffer = await gerarQrBuffer(producao.qrCodeLink)
+  const buffer = await gerarQrBuffer(montarLinkRastreio(token))
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {

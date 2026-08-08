@@ -53,7 +53,6 @@ model Producao {
   dataPlantio  DateTime? @map("data_plantio") @db.Date
   dataColheita DateTime? @map("data_colheita") @db.Date
   qrCodeToken  String?   @unique @map("qr_code_token")
-  qrCodeLink   String?   @map("qr_code_link")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime? @updatedAt @map("updated_at")
 

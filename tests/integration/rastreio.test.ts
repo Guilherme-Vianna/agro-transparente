@@ -18,7 +18,6 @@ describe("consulta de rastreio por token (integração)", () => {
         produtoId: produto.id,
         numeroLote: "LT-001",
         qrCodeToken: "TOKEN123",
-        qrCodeLink: "http://localhost:3000/rastreio/TOKEN123",
       },
     })
     await prisma.producaoAplicacao.create({

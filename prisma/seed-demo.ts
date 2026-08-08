@@ -10,7 +10,6 @@ const prisma = new PrismaClient({ adapter })
 
 const alphabet = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 const gerarToken = customAlphabet(alphabet, 12)
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
 const TOTAL_PRODUTOS = 100
 const TOTAL_LOTES = 1000
@@ -80,7 +79,6 @@ async function main() {
       dataPlantio,
       dataColheita,
       qrCodeToken: token,
-      qrCodeLink: `${baseUrl}/rastreio/${token}`,
     }
   })
 

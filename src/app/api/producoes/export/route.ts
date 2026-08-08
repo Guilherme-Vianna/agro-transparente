@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/authorization"
 import { getEmpresaAtiva } from "@/lib/session"
 import { prisma } from "@/lib/prisma"
 import { toCsv } from "@/lib/csv"
+import { montarLinkRastreio } from "@/lib/qrcode"
 
 export async function GET() {
   await requireSession()
@@ -24,7 +25,7 @@ export async function GET() {
       l.produto.nome,
       l.dataPlantio ? l.dataPlantio.toISOString().slice(0, 10) : "",
       l.dataColheita ? l.dataColheita.toISOString().slice(0, 10) : "",
-      l.qrCodeLink,
+      l.qrCodeToken ? montarLinkRastreio(l.qrCodeToken) : "",
     ])
   )
 

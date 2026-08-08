@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { Download, Pencil } from "lucide-react"
 import { requireEmpresaAccess } from "@/lib/authorization"
 import { prisma } from "@/lib/prisma"
-import { gerarQrDataUrl } from "@/lib/qrcode"
+import { gerarQrDataUrl, montarLinkRastreio } from "@/lib/qrcode"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -47,7 +47,8 @@ export default async function DetalheProducaoPage({
 
   await requireEmpresaAccess(producao.produto.empresaId)
 
-  const qrDataUrl = producao.qrCodeLink ? await gerarQrDataUrl(producao.qrCodeLink) : null
+  const qrCodeLink = producao.qrCodeToken ? montarLinkRastreio(producao.qrCodeToken) : null
+  const qrDataUrl = qrCodeLink ? await gerarQrDataUrl(qrCodeLink) : null
 
   return (
     <div className="flex flex-col gap-4 max-w-3xl">
@@ -110,7 +111,7 @@ export default async function DetalheProducaoPage({
                 </a>
               </Button>
             )}
-            {producao.qrCodeLink && <QrCodeLinkActions link={producao.qrCodeLink} />}
+            {qrCodeLink && <QrCodeLinkActions link={qrCodeLink} />}
           </CardContent>
         </Card>
       </div>
